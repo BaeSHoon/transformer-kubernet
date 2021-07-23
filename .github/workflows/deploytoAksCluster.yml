@@ -1,62 +1,115 @@
-on: [push]
+name: Docker
+
+on:
+  push:
+    # Publish `master` as Docker `latest` image.
+    branches:
+      - irisweb
+
+    # Publish `v1.2.3` tags as releases.
+    tags:
+      - v*
+
+  # Run tests for any PRs.
+  pull_request:
+#   schedule:
+#     - cron: '0 0 * * *'
+
+env:
+  # TODO: Change variable to your image's name.
+  IMAGE_NAME: image
+
 jobs:
-  build-and-deploy:
+  # test:
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - name: Run tests
+  #       run: |
+  #         if [ -f docker-compose.test.yml ]; then
+  #           docker-compose --file docker-compose.test.yml build
+  #           docker-compose --file docker-compose.test.yml run sut
+  #         else
+  #           docker build . --file Dockerfile
+  #         fi
+  push:
+    # needs: test
+
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
     steps:
-    
-    - uses: actions/checkout@master
-    
-    - uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - uses: actions/checkout@v2
+      
 
-    - name: Create ACR
-      id: create-acr
-      run: |
-        az acr create -n flaskapif -g flaskapif912b-rg --location "Korea Central" --sku Standard --admin-enabled
-        echo "::set-output name=acr_username::`az acr credential show -n flaskapif --query username | xargs`"
-        echo "::set-output name=acr_password::`az acr credential show -n flaskapif --query passwords[0].value | xargs`"
-        echo "::add-mask::`az acr credential show -n flaskapif --query passwords[0].value | xargs`"
+      - name: setup custom env
+        id: docker-cache
+        run: |
+          echo "::set-output name=dir::$HOME/.cache/docker"
 
-    - uses: azure/docker-login@v1
-      with:
-        login-server: flaskapif.azurecr.io
-        username: ${{ steps.create-acr.outputs.acr_username }}
-        password: ${{ steps.create-acr.outputs.acr_password }}
 
-    - name: Build and push image to ACR
-      id: build-image
-      run: |
-        docker build "$GITHUB_WORKSPACE/" -f  "Dockerfile" -t flaskapif.azurecr.io/a:${{ github.sha }} --label dockerfile-path=Dockerfile
-        docker push flaskapif.azurecr.io/a:${{ github.sha }}
-    
-    - uses: azure/k8s-set-context@v1
-      id: login
-      with:
-         kubeconfig: ${{ secrets.aks_a_kubeConfig }}
-    
-    - name: Create namespace
-      run: |
-        namespacePresent=`kubectl get namespace | grep flask-app | wc -l`
-        if [ $namespacePresent -eq 0 ]
-        then
-            echo `kubectl create namespace flask-app`
-        fi
+      # - uses: actions/cache@v2
+      #   with:
+      #     path: ${{ steps.docker-cache.outputs.dir }}
+      #     key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-docker-
 
-    - uses: azure/k8s-create-secret@v1
-      with:
-        namespace: flask-app
-        container-registry-url: flaskapif.azurecr.io
-        container-registry-username: ${{ steps.create-acr.outputs.acr_username }}
-        container-registry-password: ${{ steps.create-acr.outputs.acr_password }}
-        secret-name: adockerauth
-       
-    - uses: azure/k8s-deploy@v1.2
-      with:
-        namespace: flask-app
-        manifests: |
-          manifests/service.yml
-        images: |
-          flaskapif.azurecr.io/a:${{ github.sha }}
-        imagepullsecrets: |
-          adockerauth   
+
+      # - name: download docker image cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ${{ steps.docker-cache.outputs.dir }}
+      #     key: ${{ runner.os }}-docker-${{ hashFiles('Dockerfile') }}
+
+
+#       - name: load docker image from cache
+#         run: |
+#           docker load -i ~/.cache/docker/${IMAGE_NAME}.tar
+
+
+      - name: Build image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+
+
+      # - name: Save image to cache
+      #   run: |
+      #     mkdir -p ~/.cache/docker/
+      #     docker save -o ~/.cache/docker/${IMAGE_NAME}.tar ${IMAGE_NAME}
+
+
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKER_HUB }}" | docker login -u ${{ github.actor }} --password-stdin
+
+
+      - name: Push image
+        run: |
+          IMAGE_ID=${{ github.repository }}
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+
+
+      # - name: deploy to cluster
+      #   uses: steebchen/kubectl@master
+      #   env:
+      #     KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+      #   with:
+      #     args: '"apply -f ./manifests/service.yml --namespace imdb"'
+      # - name: verify deployment
+      #   uses: steebchen/kubectl@master
+      #   env:
+      #     KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+      #   with:
+      #     args: '"rollout restart deployment.apps/my-nginx --namespace imdb"'

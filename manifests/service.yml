@@ -5,13 +5,14 @@ metadata:
   labels:
     run: my-nginx
 spec:
-  ports: # 로드밸런서를 통해 외부로 노출할 포트 지정
-  - port: 8080
+  ports:
+  - port: 80
+    nodePort: 30082
     protocol: TCP
-    targetPort: 8080
+    targetPort: 80
   selector:
     run: my-nginx
-  type: LoadBalancer
+  type: NodePort
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -29,10 +30,21 @@ spec:
     spec:
       containers:
       - name: my-nginx
-        image: flaskapif.azurecr.io/a # 도커 이미지
+        image: fish895623/imdb-to-kubernet:irisweb
+        imagePullPolicy: Always
         ports:
-        - containerPort: 8080 # 외부로 노출할 컨테이너 포트
-        resources: # 자원 제한
-          limits:
-            cpu: 10m
-            memory: 100Mi
+        - containerPort: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-nginx-hpa
+  namespace: default
+spec:
+  maxReplicas: 20
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-nginx
+  targetCPUUtilizationPercentage: 50

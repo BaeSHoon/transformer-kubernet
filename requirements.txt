@@ -1,1 +1,4 @@
 flask
+tensorflow
+pandas
+tensorflow-datasets

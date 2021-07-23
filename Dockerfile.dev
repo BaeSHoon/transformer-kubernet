@@ -1,0 +1,7 @@
+FROM tensorflow/tensorflow:2.4.1-gpu
+
+RUN apt-get update \
+    && apt-get install -y git
+COPY requirements.dev.txt /tmp/requirements.txt
+RUN /usr/bin/python3 -m pip install --no-cache-dir --upgrade pip
+RUN /usr/bin/python3 -m pip install --no-cache-dir -r /tmp/requirements.txt

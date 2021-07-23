@@ -1,0 +1,8 @@
+flask
+
+matplotlib
+pandas
+tensorflow-datasets
+
+black
+ipykernel
