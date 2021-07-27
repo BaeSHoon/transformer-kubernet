@@ -1,23 +1,20 @@
+# -*- coding: utf-8 -*-
+"""flask app."""
 from flask import Flask, render_template, request
 
-from Transormer import predict, transformer
-from Transormer import VOCAB_SIZE, NUM_LAYERS, DFF, D_MODEL, NUM_HEADS, DROPOUT
-
-model = transformer(
-    vocab_size=VOCAB_SIZE,
-    num_layers=NUM_LAYERS,
-    dff=DFF,
-    d_model=D_MODEL,
-    num_heads=NUM_HEADS,
-    dropout=DROPOUT,
-)
-model.load_weights("best_modela.h5")
+from transformer import model, predict
 
 app = Flask(__name__)
 
 
 @app.route("/transformer", methods=["GET"])
 def transformer():
+    """
+    초기 html 로드.
+
+    Returns:
+        rendering html using flask
+    """
     return render_template("transformer.html")
 
 
@@ -29,10 +26,23 @@ def transformer_post():
 
 
 @app.route("/transformer/post", methods=["POST"])
-def transformer_POST_form():
+def transformer_post_form():
+    """
+    POST data from requested.
+
+    args
+        sentence (str) : `sentence` 의 value값
+        run (str)      : `predict(str(sentence))` transformer를 이용한 예측값
+
+    Returns:
+        트랜스포머 모델로 출력
+    """
     sentence = str(request.form["sentence"])
+
     return predict(sentence)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="5000")
+    # Load model
+    model.load_weights("best_model.h5")
+    app.run(host="127.0.0.1", port="5000")

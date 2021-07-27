@@ -1,9 +1,20 @@
 pipeline {
   agent any
   stages {
-    stage("Test") {
+    stage("lint") {
+      agent {
+        dockerfile {
+          filename 'jenkins/Dockerfile.test'
+          reuseNode true
+        }
+      }
+      when {
+        // expression { env.BRANCH_NAME =~ "(.*)-patch-*" }
+        // expression { env.BRANCH_NAME =~ "PR-*" }
+        changeset pattern: "*.py"
+      }
       steps {
-        echo "Test Complete"
+        sh "sh jenkins/launch.sh lint bandit"
       }
     }
   }
