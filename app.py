@@ -4,6 +4,7 @@ from flask import Flask, render_template, request
 
 from transformer import model, predict
 
+
 app = Flask(__name__)
 
 
@@ -20,10 +21,19 @@ def transformer():
 
 @app.route("/transformer", methods=["POST"])
 def transformer_post():
-    a0 = request.form["a0"]
-    result = predict(a0)
-    return render_template("transformer.html", a0=a0, result=result)
+    """
+    POST data from sites.
 
+    args:
+        sentence    (str)   : html에서 수신받은 입력값
+        result      (str)   : `predict(str(sentence))` transformer를 이용한 예측값
+
+    Returns:
+        render html using flask
+    """
+    sentence = request.form["sentence"]
+    result_predict = predict(request.form["sentence"])
+    return render_template("transformer.html", sentence=sentence, result=result_predict)
 
 @app.route("/transformer/post", methods=["POST"])
 def transformer_post_form():
