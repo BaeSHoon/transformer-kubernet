@@ -8,4 +8,5 @@ jobs:
     steps:
       - name: Set up QEMU
         run: |
-          echo "${{ env.GITHUB_RUN_NUMBER }}"
+          echo "$GITHUB_RUN_NUMBER"
+          echo ${{ github.ref }}
