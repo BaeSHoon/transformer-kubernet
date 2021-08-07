@@ -6,16 +6,19 @@ import urllib.request
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from tensorflow.python.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.python.keras.saving import model_config
+from tensorflow.python.keras.saving.save import load_model
 import tensorflow_datasets as tfds
 
-# python No Module in LazyLoader
-from tensorflow.python.keras.callbacks import EarlyStopping, ModelCheckpoint
 
-
+# %%
 class PositionalEncoding(tf.keras.layers.Layer):
-    """포지셔널 인코딩."""
-
-    def __init__(self, position, d_model):
+    def __init__(
+        self,
+        position,
+        d_model,
+    ):
         super(PositionalEncoding, self).__init__()
         self.pos_encoding = self.positional_encoding(position, d_model)
 
@@ -42,7 +45,7 @@ class PositionalEncoding(tf.keras.layers.Layer):
         pos_encoding = tf.constant(angle_rads)
         pos_encoding = pos_encoding[tf.newaxis, ...]
 
-        assert pos_encoding.shape != None, "Error with Positional Encoding"
+        print(pos_encoding.shape)
         return tf.cast(pos_encoding, tf.float32)
 
     def call(self, inputs):
@@ -51,7 +54,6 @@ class PositionalEncoding(tf.keras.layers.Layer):
 
 # %%
 sample_pos_encoding = PositionalEncoding(50, 128)
-
 
 # %%
 def scaled_dot_product_attention(query, key, value, mask):
@@ -100,8 +102,6 @@ temp_q = tf.constant([[0, 0, 10], [0, 10, 0], [10, 10, 0]], dtype=tf.float32)  #
 temp_out, temp_attn = scaled_dot_product_attention(temp_q, temp_k, temp_v, None)
 print(temp_attn)  # 어텐션 분포(어텐션 가중치의 나열)
 print(temp_out)  # 어텐션 값
-
-
 # %%
 class MultiHeadAttention(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads, name="multi_head_attention"):
@@ -179,8 +179,6 @@ def create_padding_mask(x):
 
 
 print(create_padding_mask(tf.constant([[1, 21, 777, 0, 0]])))
-
-
 # %%
 def encoder_layer(dff, d_model, num_heads, dropout, name="encoder_layer"):
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
@@ -466,7 +464,6 @@ VOCAB_SIZE = tokenizer.vocab_size + 2
 # 최대 길이를 40으로 정의
 MAX_LENGTH = 40
 
-
 # 토큰화 / 정수 인코딩 / 시작 토큰과 종료 토큰 추가 / 패딩
 def tokenize_and_filter(inputs, outputs):
     tokenized_inputs, tokenized_outputs = [], []
@@ -599,13 +596,11 @@ def evaluate(sentence):
             break
 
         # 마지막 시점의 예측 단어를 출력에 연결한다.
-        # 이는 for문을 통해서 디코더의 입력으로 사용될 예정이다.
+        # 이는 for 문을 통해서 디코더의 입력으로 사용될 예정이다.
         output = tf.concat([output, predicted_id], axis=-1)
 
     return tf.squeeze(output, axis=0)
 
-
-# %%
 
 # %%
 def predict(sentence):

@@ -1,0 +1,88 @@
+# name: Docker
+
+# on:
+#   push:
+#     branches:
+#       - "*"
+
+#     # Publish `v1.2.3` tags as releases.
+#     tags:
+#       - v*
+
+#   # Run tests for any PRs.
+#   pull_request:
+# #   schedule:
+# #     - cron: '0 0 * * *'
+
+# env:
+#   # TODO: Change variable to your image's name.
+#   IMAGE_NAME: image
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - uses: actions/checkout@v2
+
+#       - name: Run tests
+#         run: |
+#           if [ -f docker-compose.test.yml ]; then
+#             docker-compose --file docker-compose.test.yml build
+#             docker-compose --file docker-compose.test.yml run sut
+#           else
+#             docker build . --file Dockerfile
+#           fi
+#   push:
+#     needs: test
+
+#     runs-on: ubuntu-latest
+#     if: github.event_name == 'push'
+
+#     steps:
+#       - uses: actions/checkout@v2
+
+#       - name: Log into registry
+#         run: echo "${{ secrets.DOCKER_HUB }}" | docker login -u ${{ github.actor }} --password-stdin
+
+#       - name: Set Image tags
+#         run: |
+#           export TAG=$GITHUB_RUN_NUMBER
+
+#       - name: Build & Push image
+#         run: docker-compose build && docker-compose push
+
+#   deploy:
+#     needs: push
+#     runs-on: ubuntu-latest
+#     if: github.event_name == 'deploy'
+#     steps:
+#       - name: deploy to cluster
+#         uses: steebchen/kubectl@master
+#         env:
+#           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+#         with:
+#           args: '"apply -f ./manifests/service.yml --namespace transformer"'
+
+#       - name: verify deployment
+#         uses: steebchen/kubectl@master
+#         env:
+#           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+#         with:
+#           args: '"rollout restart deployment.apps/my-nginx --namespace transformer"'
+
+#       - name: Push image
+#         run: |
+#           IMAGE_ID=${{ github.repository }}
+#           # Change all uppercase to lowercase
+#           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+#           # Strip git ref prefix from version
+#           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+#           # Strip "v" prefix from tag name
+#           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+#           # Use Docker `latest` tag convention
+#           [ "$VERSION" == "master" ] && VERSION=latest
+#           echo IMAGE_ID=$IMAGE_ID
+#           echo VERSION=$VERSION
+#           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+#           docker push $IMAGE_ID:$VERSION

@@ -1,4 +1,7 @@
+.gitignore
 .vscode/
-kubernetes.yml
+.github/
+manifests/
 docker-compose.yml
-Dockerfile
+Dockerfile*
+__pycache__/

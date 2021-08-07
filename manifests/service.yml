@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-nginx-service # 서비스 이름 지정
+  name: my-nginx-service
   labels:
     run: my-nginx
 spec:
   ports:
-  - port: 80
+  - port: 5000
     nodePort: 30082
     protocol: TCP
-    targetPort: 80
+    targetPort: 5000
   selector:
     run: my-nginx
   type: NodePort
@@ -30,10 +30,17 @@ spec:
     spec:
       containers:
       - name: my-nginx
-        image: fish895623/imdb-to-kubernet:irisweb
+        image: fish895623/imdb-to-kubernet:latest
         imagePullPolicy: Always
         ports:
-        - containerPort: 80
+        - containerPort: 5000
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "1m"
+          limits:
+            memory: "1000Mi"
+            cpu: "10m"
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler

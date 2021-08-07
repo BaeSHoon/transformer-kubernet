@@ -4,7 +4,6 @@ from flask import Flask, render_template, request
 
 from transformer import model, predict
 
-
 app = Flask(__name__)
 
 
@@ -53,6 +52,5 @@ def transformer_post_form():
 
 
 if __name__ == "__main__":
-    # Load model
     model.load_weights("best_model.h5")
-    app.run(host="127.0.0.1", port="5000")
+    app.run(host="0.0.0.0", port="5000")

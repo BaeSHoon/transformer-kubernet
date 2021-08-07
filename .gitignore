@@ -1,5 +1,7 @@
 __pycache__/
 **.csv
-.pytest_cache/
+.idea/
 .vscode/
+.devcontainers/
+.pytest_cache/
 .mypy_cache/

@@ -1,10 +1,14 @@
-version: '3.9'
+version: "3.9"
 
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: fish895623/testapp:latest
-    ports:
-      - 8080:8080
+    image: fish895623/imdb-to-kubernet
+  build_version_latest:
+    extends: app
+    image: fish895623/imdb-to-kubernet:latest
+  build_version_tag:
+    extends: app
+    image: fish895623/imdb-to-kubernet:${TAG}

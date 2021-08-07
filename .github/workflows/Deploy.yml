@@ -1,0 +1,77 @@
+name: Docker & kubernetes
+
+on:
+  push:
+    branches:
+      - "*"
+
+    # Publish `v1.2.3` tags as releases.
+    tags:
+      - v*
+
+  # Run tests for any PRs.
+  pull_request:
+#   schedule:
+#     - cron: '0 0 * * *'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: |
+          if [ -f docker-compose.test.yml ]; then
+            docker-compose --file docker-compose.test.yml build
+            docker-compose --file docker-compose.test.yml run sut
+          else
+            docker build . --file Dockerfile
+          fi
+  push:
+    needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKER_HUB }}" | docker login -u ${{ github.actor }} --password-stdin
+
+      - name: Build & Push image
+        run: |
+          export TAG=$GITHUB_SHA
+          docker-compose build && docker-compose push
+
+  deploy:
+    env:
+      namespace: transformer
+    needs: push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Testing env
+        run: echo ${{ env.namespace }}
+      - name: create namespace
+        run: |
+          if kubectl get namespaces | awk '!/^(NAME)/{ print $1 }' | grep '^${{ env.namespace }}$'; then
+            echo -n "namespace exists"
+          else
+            kubectl create namespace ${{ env.namespace }}
+          fi
+
+      - name: deploy to cluster
+        uses: steebchen/kubectl@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+        with:
+          args: '"apply -f ./manifests/service.yml --namespace ${{ env.namespace }}"'
+
+      - name: verify deployment
+        uses: steebchen/kubectl@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+        with:
+          args: '"rollout restart deployment.apps/my-nginx --namespace ${{ env.namespace }}"'
