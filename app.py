@@ -34,6 +34,7 @@ def transformer_post():
     result_predict = predict(request.form["sentence"])
     return render_template("transformer.html", sentence=sentence, result=result_predict)
 
+
 @app.route("/transformer/post", methods=["POST"])
 def transformer_post_form():
     """
@@ -41,14 +42,15 @@ def transformer_post_form():
 
     args
         sentence (str) : `sentence` 의 value값
-        run (str)      : `predict(str(sentence))` transformer를 이용한 예측값
+        result   (str) : `predict(__str__)` transformer를 이용한 예측값
 
     Returns:
         트랜스포머 모델로 출력
     """
-    sentence = str(request.form["sentence"])
+    print(request.get_json()["sentence"])
+    request.get_json()["transformer"] = predict(request.get_json()["sentence"])
 
-    return predict(sentence)
+    return request.get_json()
 
 
 if __name__ == "__main__":

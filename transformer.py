@@ -433,7 +433,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 sample_learning_rate = CustomSchedule(d_model=128)
 # %%
 urllib.request.urlretrieve(
-    "https://raw.githubusercontent.com/songys/Chatbot_data/master/ChatbotData%20.csv",
+    "https://raw.githubusercontent.com/songys/Chatbot_data/master/ChatbotData.csv",
     filename="ChatBotData.csv",
 )
 train_data = pd.read_csv("ChatBotData.csv")
