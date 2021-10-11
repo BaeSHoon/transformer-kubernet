@@ -1,4 +1,4 @@
 flask
-tensorflow
+tensorflow==2.4.1
 pandas
 tensorflow-datasets
