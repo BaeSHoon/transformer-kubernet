@@ -1,3 +1,5 @@
-# service transformer using kubernetes
+# Service Transformer Chatbot using Kubernetes
 
-Have hard time pr
+- Autoscaling & Failover with kube
+- Deploy Backend with Flasasdfk
+- Can Use on Android App, Web
