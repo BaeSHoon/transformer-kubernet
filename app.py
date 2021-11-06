@@ -10,7 +10,7 @@ app = Flask(__name__)
 @app.route("/transformer", methods=["GET"])
 def transformer():
     """
-    초기 html 로드.
+    load default transformer page.
 
     Returns:
         rendering html using flask
@@ -24,8 +24,8 @@ def transformer_post():
     POST data from sites.
 
     args:
-        sentence    (str)   : html에서 수신받은 입력값
-        result      (str)   : `predict(str(sentence))` transformer를 이용한 예측값
+        sentence    (str)   : recived data from html
+        result      (str)   : `predict(str(sentence))` predict answer using transformer model
 
     Returns:
         render html using flask
@@ -41,11 +41,11 @@ def transformer_post_form():
     POST data from requested.
 
     args
-        sentence (str) : `sentence` 의 value값
+        sentence (str) : `sentence` value
         result   (str) : `predict(__str__)` transformer를 이용한 예측값
 
     Returns:
-        트랜스포머 모델로 출력
+        json data
     """
     print(request.get_json()["sentence"])
     request.get_json()["transformer"] = predict(request.get_json()["sentence"])
