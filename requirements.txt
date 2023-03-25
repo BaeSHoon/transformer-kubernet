@@ -1,4 +1,4 @@
 flask
-tensorflow==2.7.2
+tensorflow==2.11.1
 pandas
 tensorflow-datasets
